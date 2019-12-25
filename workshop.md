@@ -1,8 +1,19 @@
+# Sock Shop on OpenShiftでマイクロサービス体験
+本資料は、Weaveworksが公開しているマイクロサービスのデモアプリケーション[Sock Shop](https://microservices-demo.github.io/)を利用(on OpenShift)して、マイクロサービスを体験するハンズオンです。
+
 ## Sock Shopについて
 https://github.com/microservices-demo/microservices-demo
 
 ### Application Design
-https://github.com/microservices-demo/microservices-demo/blob/master/internal-docs/design.md
+![application-design](https://github.com/microservices-demo/microservices-demo.github.io/blob/HEAD/assets/Architecture.png?raw=true)
+
+## 事前準備
+- openshiftクラスタ
+- Google Chrome
+- ocコマンドのインストール
+- curlのインストール
+- jqのインストール(optional)
+- postmanのインストール(optional)
 
 ## Sock ShopのOpenShiftへのデプロイ
 - OPENTLCで3.11のimplementationラボを立ち上げ
@@ -37,7 +48,6 @@ deployment.extensions/user-db created
 service/user-db created
 deployment.extensions/user created
 service/user created
-
 
 $ oc get pod   
 NAME                            READY     STATUS    RESTARTS   AGE
@@ -90,7 +100,7 @@ front-end   front-end-sock-shop.apps.8aad.example.opentlc.com             front-
 ```
 
 ## Sock Shopを触ってみよう
-まずは、Sock Shopのサービスを触って概要を理解しよう。
+まずは、Sock Shopのサービスをブラウザから触って概要を理解しよう。
 
 1. ログインする
     - デフォルトユーザでuser/passwordが用意されている。
@@ -106,11 +116,6 @@ front-end   front-end-sock-shop.apps.8aad.example.opentlc.com             front-
 1. オーダーの詳細をみてみる
 
 ## マイクロサービスを体験してみよう
-### 事前準備
-- curlのインストール
-- jqのインストール(optional)
-- postmanのインストール
-
 ### 各サービス
 https://github.com/microservices-demo/microservices-demo/blob/master/internal-docs/design.md
 
@@ -128,6 +133,7 @@ methodとか参考になる実装
 ### Swagger
 APIの仕様をみるためにはどうしたらいいのか？
 Swaggerについてまなんでみよう。
+https://microservices-demo.github.io/api/index
 
 ### 他社のAPIドキュメントを参考にする
 - Github
@@ -135,9 +141,48 @@ Swaggerについてまなんでみよう。
 - Qiita
 
 ### API検証のいい方法
-#### Curl 
+APIの開発や検証では、欠かせないツールがあります。
+CurlやPostmanの使い方はよく覚えておくことをおすすめします。
+詳細な使い方は、ここでは割愛しますが、本ページに出てくるいくつかの基本的な項目について記載します。
 
-#### Postman
+#### メソッドの指定
+curlでは`curl https://google.com`と指定すると
+デフォルトではGETメソッドを利用します。
+システムのAPIではGETのほかにPOSTやDELETEなどのメソッドを使うことも多くあります。
+`-X`オプションで指定することができます。
+
+```
+curl -X POST https://xxxxx/user
+```
+
+#### データ
+POSTなどのメソッドを利用する場合は、リクエストともにデータを送信することがよくあります。
+例えばユーザ情報の登録APIにおいては、登録するデータを送信する必要があります。
+データの形式はAPI仕様によるので、必ず確認してください。
+下記では、jsonで`name`という項目が必要な場合の例です。
+
+```
+$ curl -XPOST \
+-d '{"name":"mosuke5"}' \
+-H 'Content-Type:application/json; charset=UTF-8' \
+https://xxxxx/user
+```
+
+#### HTTPヘッダーの追加
+```
+$ curl -H 'User-Agent: hoge' https://xxxxx/
+```
+
+#### クッキー
+APIによっては、認証が必要なことがあります。
+例えば、ユーザAの個人情報がユーザBから取得できてしまってはいけません。
+認証の方法もAPI仕様によるので、必ず確認しましょう。
+本ワークショップでは、クッキーを利用するのでその方法を紹介します。
+詳しくは、「ログイン」の項目で実践してみましょう。
+
+```
+curl -XGET -c cookie.txt https://xxxxx/login
+```
 
 ### カタログ情報API
 カタログ情報はログインなしでも実行できる簡単なAPI。
@@ -318,6 +363,21 @@ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders | jq .
 フロントエンドサービスの役割を考えてみよう。  
 ひとつひとつのAPIがどんなものかわかってきたところで、フロントエンドサービスのコードをのぞいてみよう。
 
+#### Gatewayサービスの役割
+- メリット
+    - アプリケーションの内部仕様を隠蔽できる
+    - クライアントからみて、各サービスの接続先を気にしなくて良い
+    - クライアントサイドを簡素化
+    - クライアントからのリクエスト数の削減
+    - 認証認可などのオフロード
+- デメリット
+    - レスポンスタイムの増加
+    - コンポーネントが増えることによる複雑化
+    - ボトルネックの可能性
+    - Gatewayのモノリシック化
+
+[API ゲートウェイ パターンと、クライアントからマイクロサービスへの直接通信との比較](https://docs.microsoft.com/ja-jp/dotnet/architecture/microservices/architect-microservice-container-applications/direct-client-to-microservice-communication-versus-the-api-gateway-pattern)
+
 ### フロントエンドでのデータの扱い
 例えば、オーダー詳細をブラウザからみてみよう。オーダーの情報はもちろん商品の情報も表示されている。しかし、オーダーAPIではitemのidしか返していません。
 どのようにしてitemの情報を取得しているでしょうか？
@@ -327,11 +387,25 @@ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders | jq .
 アーキテクチャデザインの図を見ると、shippingサービスはRabbitMQに対してデータを送っています。これまで、見てきたAPIはすべて同期的なデータ連携でしたが、
 
 ## あるコンポーネントを落としてみよう
+orderサービスを落としてみて、どんな影響があるか確認してみよう。
+
+```
+$ oc scale deployment 
+```
 
 ## あるコンポーネントをスケールさせてみよう
+フロントエンドサービスをスケールさせてみる。
+
+```
+$ oc scale 
+```
 
 ## あるコンポーネントを更新してみよう
 フロントエンドのコンテナイメージを変更してデプロイしてみよう。
+
+### 自分でイメージを作る
+
+### サンプルイメージを利用する
 
 ## Pythonで練習してみよう
 - Flask
