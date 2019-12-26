@@ -14,10 +14,20 @@ spec:
     spec:
       containers:
       - name: carts-db
-        image: mongo
+        #image: mongo
+        image: centos/mongodb-34-centos7
         ports:
         - name: mongo
           containerPort: 27017
+        env:
+        - name: MONGODB_USER
+          value: sock-user
+        - name: MONGODB_PASSWORD
+          value: password
+        - name: MONGODB_DATABASE
+          value: data
+        - name: MONGODB_ADMIN_PASSWORD
+          value: admin
         volumeMounts:
         - mountPath: /tmp
           name: tmp-volume
@@ -67,6 +77,8 @@ spec:
            value: zipkin.jaeger.svc.cluster.local
          - name: JAVA_OPTS
            value: -Xms64m -Xmx128m -XX:PermSize=32m -XX:MaxPermSize=64m -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom
+         - name: db
+           value: sock-user:password@carts-db
         volumeMounts:
         - mountPath: /tmp
           name: tmp-volume
@@ -108,18 +120,23 @@ spec:
     spec:
       containers:
       - name: catalogue-db
-        image: weaveworksdemos/catalogue-db:0.3.5
+        #image: weaveworksdemos/catalogue-db:0.3.5
+        image: centos/mysql-57-centos7
         env:
-          - name: MYSQL_ROOT_PASSWORD
-            value: fake_password
+          - name: MYSQL_USER
+            value: catalogue_user
+          - name: MYSQL_PASSWORD
+            value: default_password
           - name: MYSQL_DATABASE
             value: socksdb
+          - name: MYSQL_ROOT_PASSWORD
+            value: fake_password
         ports:
         - name: mysql
           containerPort: 3306
-        securityContext:
-          runAsNonRoot: false
-          runAsUser: 0
+        #securityContext:
+        #  runAsNonRoot: false
+        #  runAsUser: 0
       nodeSelector:
         beta.kubernetes.io/os: linux
 ---
@@ -235,10 +252,20 @@ spec:
     spec:
       containers:
       - name: orders-db
-        image: mongo
+        #image: mongo
+        image: centos/mongodb-34-centos7
         ports:
         - name: mongo
           containerPort: 27017
+        env:
+        - name: MONGODB_USER
+          value: sock-user
+        - name: MONGODB_PASSWORD
+          value: password
+        - name: MONGODB_DATABASE
+          value: data
+        - name: MONGODB_ADMIN_PASSWORD
+          value: admin
         volumeMounts:
         - mountPath: /tmp
           name: tmp-volume
@@ -286,6 +313,8 @@ spec:
            value: zipkin.jaeger.svc.cluster.local
          - name: JAVA_OPTS
            value: -Xms64m -Xmx128m -XX:PermSize=32m -XX:MaxPermSize=64m -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom
+         - name: db
+           value: sock-user:password@orders-db
         ports:
         - containerPort: 80
         volumeMounts:
@@ -491,10 +520,20 @@ spec:
     spec:
       containers:
       - name: user-db
-        image: weaveworksdemos/user-db:0.4.0
+        #image: weaveworksdemos/user-db:0.4.0
+        image: centos/mongodb-34-centos7
         ports:
         - name: mongo
           containerPort: 27017
+        env:
+        - name: MONGODB_USER
+          value: sock-user
+        - name: MONGODB_PASSWORD
+          value: password
+        - name: MONGODB_DATABASE
+          value: users
+        - name: MONGODB_ADMIN_PASSWORD
+          value: admin
         volumeMounts:
         - mountPath: /tmp
           name: tmp-volume
@@ -540,6 +579,10 @@ spec:
         ports:
         - containerPort: 80
         env:
+        - name: MONGO_USER
+          value: sock-user
+        - name: MONGO_PASS
+          value: password
         - name: MONGO_HOST
           value: user-db:27017
       nodeSelector:

@@ -16,9 +16,7 @@ https://github.com/microservices-demo/microservices-demo
 - postmanのインストール(optional)
 
 ## Sock ShopのOpenShiftへのデプロイ
-- OPENTLCで3.11のimplementationラボを立ち上げ
-- sock shopのデプロイ
-  - https://github.com/coolpalani/microservices-demo-openshift
+本レポジトリのマニフェストファイルは、
 
 ```
 $ oc apply -f complete-demo.yaml
@@ -90,14 +88,17 @@ shipping       ClusterIP   172.30.193.109   <none>        80/TCP      2m
 user           ClusterIP   172.30.24.155    <none>        80/TCP      2m
 user-db        ClusterIP   172.30.48.244    <none>        27017/TCP   2m
 
-$ oc expose 
-oc expose service/front-end
+$ oc expose service/front-end
 route.route.openshift.io/front-end exposed
 
 $ oc get route
 NAME        HOST/PORT                                           PATH      SERVICES    PORT      TERMINATION   WILDCARD
 front-end   front-end-sock-shop.apps.8aad.example.opentlc.com             front-end   web                     None
 ```
+
+ブラウザを起動して、作成したrouteのURLに接続して以下のようなSock Shopの画面が返ってくるか確認しましょう。
+
+![sockshop-index](/images/sockshop-index.png)
 
 ## Sock Shopを触ってみよう
 まずは、Sock Shopのサービスをブラウザから触って概要を理解しよう。
@@ -115,7 +116,7 @@ front-end   front-end-sock-shop.apps.8aad.example.opentlc.com             front-
 1. もういちどオーダーしてみる
 1. オーダーの詳細をみてみる
 
-## マイクロサービスを体験してみよう
+## Sock Shopを調べてみよう
 ### 各サービス
 https://github.com/microservices-demo/microservices-demo/blob/master/internal-docs/design.md
 
@@ -390,14 +391,18 @@ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders | jq .
 orderサービスを落としてみて、どんな影響があるか確認してみよう。
 
 ```
-$ oc scale deployment 
+$ oc scale --replicas=0 deployment/orders
 ```
+
+- オーダーはできる？
+- 他のコンポーネントへの影響は？
+- ユーザ体験はどう変わったか？
 
 ## あるコンポーネントをスケールさせてみよう
 フロントエンドサービスをスケールさせてみる。
 
 ```
-$ oc scale 
+$ oc scale --replicas=3 deployment/front-end 
 ```
 
 ## あるコンポーネントを更新してみよう
@@ -406,7 +411,3 @@ $ oc scale
 ### 自分でイメージを作る
 
 ### サンプルイメージを利用する
-
-## Pythonで練習してみよう
-- Flask
-- Swagger書いてみる
