@@ -411,3 +411,5 @@ $ oc scale --replicas=3 deployment/front-end
 ### 自分でイメージを作る
 
 ### サンプルイメージを利用する
+
+## トレーシング

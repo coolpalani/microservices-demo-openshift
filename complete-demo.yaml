@@ -14,8 +14,11 @@ spec:
     spec:
       containers:
       - name: carts-db
-        #image: mongo
         image: centos/mongodb-34-centos7
+        resources:
+          limits:
+            cpu: 200m
+            memory: 1Gi
         ports:
         - name: mongo
           containerPort: 27017
@@ -104,8 +107,8 @@ spec:
   selector:
     name: carts
 ---
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: v1
+kind: DeploymentConfig
 metadata:
   name: catalogue-db
   labels:
@@ -113,6 +116,19 @@ metadata:
   namespace: sock-shop
 spec:
   replicas: 1
+  strategy:
+    recreateParams:
+      post:
+        execNewPod:
+          command:
+          - "/bin/bash"
+          - "-c"
+          - "sleep 10 && curl https://raw.githubusercontent.com/microservices-demo/catalogue/master/docker/catalogue-db/data/dump.sql -o dump.sql && mysql -uroot -pfake_password socksdb -h $CATALOGUE_DB_SERVICE_HOST < dump.sql"
+          containerName: catalogue-db
+        failurePolicy: Abort
+      timeoutSeconds: 600
+    resources: {}
+    type: Recreate
   template:
     metadata:
       labels:
@@ -120,8 +136,11 @@ spec:
     spec:
       containers:
       - name: catalogue-db
-        #image: weaveworksdemos/catalogue-db:0.3.5
         image: centos/mysql-57-centos7
+        resources:
+          limits:
+            cpu: 200m
+            memory: 1Gi
         env:
           - name: MYSQL_USER
             value: catalogue_user
@@ -134,9 +153,6 @@ spec:
         ports:
         - name: mysql
           containerPort: 3306
-        #securityContext:
-        #  runAsNonRoot: false
-        #  runAsUser: 0
       nodeSelector:
         beta.kubernetes.io/os: linux
 ---
@@ -211,6 +227,9 @@ spec:
           requests:
             cpu: 100m
             memory: 100Mi
+          limits:
+            cpu: 200m
+            memory: 250Mi
         ports:
         - containerPort: 8079
       nodeSelector:
@@ -230,7 +249,6 @@ spec:
       port: 80
       targetPort: 8079
       protocol: TCP
-#    nodePort: 30001
   selector:
     name: front-end
 status:
@@ -252,7 +270,6 @@ spec:
     spec:
       containers:
       - name: orders-db
-        #image: mongo
         image: centos/mongodb-34-centos7
         ports:
         - name: mongo
@@ -359,6 +376,13 @@ spec:
       containers:
       - name: payment
         image: weaveworksdemos/payment:0.4.3
+        resources:
+          requests:
+            cpu: 200m
+            memory: 250Mi
+          limits:
+            cpu: 300m
+            memory: 500Mi
         ports:
         - containerPort: 80
       nodeSelector:
@@ -504,8 +528,8 @@ spec:
   selector:
     name: shipping
 ---
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: v1
+kind: DeploymentConfig
 metadata:
   name: user-db
   labels:
@@ -513,6 +537,19 @@ metadata:
   namespace: sock-shop
 spec:
   replicas: 1
+  strategy:
+    recreateParams:
+      post:
+        execNewPod:
+          command:
+          - "/bin/bash"
+          - "-c"
+          - "sleep 10 && curl https://raw.githubusercontent.com/microservices-demo/user/master/docker/user-db/scripts/accounts-create.js -o accounts-create.js && mongo -u sock-user -p password $USER_DB_SERVICE_HOST:$USER_DB_SERVICE_PORT/users accounts-create.js"
+          containerName: user-db
+        failurePolicy: Abort
+      timeoutSeconds: 600
+    resources: {}
+    type: Recreate
   template:
     metadata:
       labels:
@@ -520,7 +557,6 @@ spec:
     spec:
       containers:
       - name: user-db
-        #image: weaveworksdemos/user-db:0.4.0
         image: centos/mongodb-34-centos7
         ports:
         - name: mongo
