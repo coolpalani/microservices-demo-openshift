@@ -5,6 +5,8 @@
 https://github.com/microservices-demo/microservices-demo
 
 ### Application Design
+Sock Shopのデザインは下記の通りで、Java, NodeJS, Goなどとマイクロサービスの特徴であるポリグロットを体現しています。
+
 ![application-design](https://github.com/microservices-demo/microservices-demo.github.io/blob/HEAD/assets/Architecture.png?raw=true)
 
 ## 事前準備
@@ -116,31 +118,50 @@ front-end   front-end-sock-shop.apps.8aad.example.opentlc.com             front-
 1. もういちどオーダーしてみる
 1. オーダーの詳細をみてみる
 
-## Sock Shopを調べてみよう
+## Sock Shopのデータ構造をみる
 ### 各サービス
 https://github.com/microservices-demo/microservices-demo/blob/master/internal-docs/design.md
 
-### kubernetesにおける概念
-
 ### データ構造を確認する
+どのサービスがどのようなデータを保持しているかは、非常に重要です。
+どのサービスがデータベースをもっていて、どのような情報をもっているか確かめてみましょう。
+
+#### データベースを持っているサービス
 - catalogue(mysql)
 - user(monogo)
 - cart(mongo)
 - order(mongo)
 
-### HTTPの基礎
-methodとか参考になる実装
+#### 確認方法例
+```
+$ oc run --generator=run-pod/v1 debug --image registry.gitlab.com/mosuke5/debug-container -it /bin/bash 
+# mysql -uroot -pfake_password socksdb -h catalogue-db
+mysql>
+mysql> show tables;
++-------------------+
+| Tables_in_socksdb |
++-------------------+
+| sock              |
+| sock_tag          |
+| tag               |
++-------------------+
+3 rows in set (0.01 sec)
+mysql>
+mysql> desc sock;
+```
+
+```
+# mongo -u sock-user -p password user-db/users
+> db.customers.find()
+{ "_id" : ObjectId("5e1311e9019de10001d6d2db"), "firstName" : "taro", "lastName" : "ebisu", "email" : "taro.ebisu@xxxxxx.com", "username" : "mosuke5", "password" : "146d934cd057fa9dd4024df3c2c8dce86e03aade", "links" : {  }, "salt" : "a54efc2f95e33d8ad759c38153b808a57178e08d", "addresses" : [ ], "cards" : [ ] }
+```
 
 ### Swagger
 APIの仕様をみるためにはどうしたらいいのか？
 Swaggerについてまなんでみよう。
 https://microservices-demo.github.io/api/index
 
-### 他社のAPIドキュメントを参考にする
-- Github
-- Twitter
-- Qiita
-
+## Sock ShopのAPIを実行してみる
 ### API検証のいい方法
 APIの開発や検証では、欠かせないツールがあります。
 CurlやPostmanの使い方はよく覚えておくことをおすすめします。
@@ -229,8 +250,6 @@ $ cat cookie.txt
 
 xxxxxxx
 ```
-
-chromeからログインセッションをとってきます。
 
 ログインの確認
 ```
@@ -387,29 +406,45 @@ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders | jq .
 ### 非同期通信
 アーキテクチャデザインの図を見ると、shippingサービスはRabbitMQに対してデータを送っています。これまで、見てきたAPIはすべて同期的なデータ連携でしたが、
 
-## あるコンポーネントを落としてみよう
-orderサービスを落としてみて、どんな影響があるか確認してみよう。
+## Sock Shopにおけるxxxx
+### サービスを落としてみよう
+マイクロサービスの回復性について考えてみます。  
+cartサービスを落としてみて、どんな影響があるか確認してみよう。
 
 ```
-$ oc scale --replicas=0 deployment/orders
+$ oc scale --replicas=0 deployment/carts
 ```
 
 - オーダーはできる？
 - 他のコンポーネントへの影響は？
 - ユーザ体験はどう変わったか？
 
-## あるコンポーネントをスケールさせてみよう
-フロントエンドサービスをスケールさせてみる。
+#### デグレードの実装
+cartsサービスを落としたあと、UI上からカートボタンが消えたのに気づきましたか？
+これは、マイクロサービスでよくあるデグレードの実装が行われているからです。
+できる人は、実際にデグレードの実装が行われているコードを探してみましょう。
+
+#### サーキットブレーカについて
+ブラウザのデバッグツールを開いて、cartsサービスへの通信状況を見てみましょう。  
+アクセスの度にcartsサービスのタイムアウトを待っているのがわかるのではないでしょうか。
+
+### サービスをスケールさせてみよう
+マイクロサービスのスケーリングについて考えてみます。  
+マイクロサービスでは特定のサービスのみをスケールすることが容易であることが特徴の１つです。
+ためしにフロントエンドサービスをスケールさせてみてみましょう。
 
 ```
 $ oc scale --replicas=3 deployment/front-end 
 ```
 
-## あるコンポーネントを更新してみよう
+### サービスをデプロイしてみよう
 フロントエンドのコンテナイメージを変更してデプロイしてみよう。
 
-### 自分でイメージを作る
+#### 自分でイメージを作る
 
-### サンプルイメージを利用する
+#### サンプルイメージを利用する
 
 ## トレーシング
+```
+$ oc apply -f tracing/jaeger.yml
+```

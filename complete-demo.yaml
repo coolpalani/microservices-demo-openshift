@@ -16,6 +16,9 @@ spec:
       - name: carts-db
         image: centos/mongodb-34-centos7
         resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
           limits:
             cpu: 200m
             memory: 1Gi
@@ -73,11 +76,24 @@ spec:
       containers:
       - name: carts
         image: weaveworksdemos/carts:0.4.8
+        resources:
+          #requests:
+          #  cpu: 100m
+          #  memory: 200Mi
+          limits:
+            cpu: 200m
+            memory: 1Gi
         ports:
          - containerPort: 80
+        #startupProbe:
+        #  httpGet:
+        #    path: /
+        #    port: 80
+        #  failureThreshold: 30
+        #  periodSeconds: 10
         env:
          - name: ZIPKIN
-           value: zipkin.jaeger.svc.cluster.local
+           value: zipkin
          - name: JAVA_OPTS
            value: -Xms64m -Xmx128m -XX:PermSize=32m -XX:MaxPermSize=64m -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom
          - name: db
@@ -127,7 +143,10 @@ spec:
           containerName: catalogue-db
         failurePolicy: Abort
       timeoutSeconds: 600
-    resources: {}
+    resources:
+      requests:
+        cpu: 100m
+        memory: 200Mi
     type: Recreate
   template:
     metadata:
@@ -138,6 +157,9 @@ spec:
       - name: catalogue-db
         image: centos/mysql-57-centos7
         resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
           limits:
             cpu: 200m
             memory: 1Gi
@@ -188,6 +210,16 @@ spec:
       containers:
       - name: catalogue
         image: weaveworksdemos/catalogue:0.3.5
+        env:
+        - name: ZIPKIN
+          value: http://zipkin:9411/api/v1/spans
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+          limits:
+            cpu: 100m
+            memory: 200Mi
         ports:
         - containerPort: 80
       nodeSelector:
@@ -271,6 +303,13 @@ spec:
       containers:
       - name: orders-db
         image: centos/mongodb-34-centos7
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+          limits:
+            cpu: 200m
+            memory: 1Gi
         ports:
         - name: mongo
           containerPort: 27017
@@ -327,7 +366,7 @@ spec:
         image: weaveworksdemos/orders:0.4.7
         env:
          - name: ZIPKIN
-           value: zipkin.jaeger.svc.cluster.local
+           value: zipkin
          - name: JAVA_OPTS
            value: -Xms64m -Xmx128m -XX:PermSize=32m -XX:MaxPermSize=64m -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom
          - name: db
@@ -376,13 +415,16 @@ spec:
       containers:
       - name: payment
         image: weaveworksdemos/payment:0.4.3
+        env:
+        - name: ZIPKIN
+          value: http://zipkin:9411/api/v1/spans
         resources:
           requests:
-            cpu: 200m
-            memory: 250Mi
+            cpu: 100m
+            memory: 100Mi
           limits:
-            cpu: 300m
-            memory: 500Mi
+            cpu: 100m
+            memory: 100Mi
         ports:
         - containerPort: 80
       nodeSelector:
@@ -498,7 +540,7 @@ spec:
         image: weaveworksdemos/shipping:0.4.8
         env:
          - name: ZIPKIN
-           value: zipkin.jaeger.svc.cluster.local
+           value: zipkin
          - name: JAVA_OPTS
            value: -Xms64m -Xmx128m -XX:PermSize=32m -XX:MaxPermSize=64m -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom
         ports:
@@ -548,7 +590,10 @@ spec:
           containerName: user-db
         failurePolicy: Abort
       timeoutSeconds: 600
-    resources: {}
+    resources:
+      requests:
+        cpu: 100m
+        memory: 200Mi
     type: Recreate
   template:
     metadata:
@@ -621,6 +666,15 @@ spec:
           value: password
         - name: MONGO_HOST
           value: user-db:27017
+        - name: ZIPKIN
+          value: http://zipkin:9411/api/v1/spans
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 300m
+            memory: 100Mi
       nodeSelector:
         beta.kubernetes.io/os: linux
 ---
