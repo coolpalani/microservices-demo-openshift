@@ -18,7 +18,7 @@ Sock Shopのデザインは下記の通りで、Java, NodeJS, Goなどとマイ�
 - postmanのインストール(optional)
 
 ## Sock ShopのOpenShiftへのデプロイ
-本レポジトリのマニフェストファイルは、
+本レポジトリのマニフェストファイルは、SCCの変更やcluster-adminを持っていなくてもOpenShift上で動くように修正しています。
 
 ```
 $ oc apply -f complete-demo.yaml
@@ -105,13 +105,12 @@ front-end   front-end-sock-shop.apps.8aad.example.opentlc.com             front-
 ## Sock Shopを触ってみよう
 まずは、Sock Shopのサービスをブラウザから触って概要を理解しよう。
 
-1. ログインする
-    - デフォルトユーザでuser/passwordが用意されている。
+1. ユーザ登録をする
+  - デフォルトでユーザは登録されていない
 1. カタログから靴下を検索、閲覧する
 1. カートに入れてみる
 1. カートの中身を確認してみる
 1. オーダーしてみる
-1. 一度ログアウトして、新規ユーザを作ってみる
 1. ペイメントと住所を登録せずに、何かをオーダーしてみる
 1. ペイメントの登録をしてみる
 1. 住所の登録をしてみる
@@ -133,6 +132,9 @@ https://github.com/microservices-demo/microservices-demo/blob/master/internal-do
 - order(mongo)
 
 #### 確認方法例
+例として、データ構造の確認方法を記載します。
+`registry.gitlab.com/mosuke5/debug-container`は、mysqlとmongodbのクライアントをインストールしてあるCentOSベースのイメージです。
+
 ```
 $ oc run --generator=run-pod/v1 debug --image registry.gitlab.com/mosuke5/debug-container -it /bin/bash 
 # mysql -uroot -pfake_password socksdb -h catalogue-db
@@ -148,6 +150,7 @@ mysql> show tables;
 3 rows in set (0.01 sec)
 mysql>
 mysql> desc sock;
+???
 ```
 
 ```
@@ -156,15 +159,15 @@ mysql> desc sock;
 { "_id" : ObjectId("5e1311e9019de10001d6d2db"), "firstName" : "taro", "lastName" : "ebisu", "email" : "taro.ebisu@xxxxxx.com", "username" : "mosuke5", "password" : "146d934cd057fa9dd4024df3c2c8dce86e03aade", "links" : {  }, "salt" : "a54efc2f95e33d8ad759c38153b808a57178e08d", "addresses" : [ ], "cards" : [ ] }
 ```
 
+## Sock ShopのAPIを実行してみる
 ### Swagger
 APIの仕様をみるためにはどうしたらいいのか？
 Swaggerについてまなんでみよう。
 https://microservices-demo.github.io/api/index
 
-## Sock ShopのAPIを実行してみる
-### API検証のいい方法
+### APIの検証方法
 APIの開発や検証では、欠かせないツールがあります。
-CurlやPostmanの使い方はよく覚えておくことをおすすめします。
+Curlや[Postman](https://www.getpostman.com/)の使い方はよく覚えておくことをおすすめします。
 詳細な使い方は、ここでは割愛しますが、本ページに出てくるいくつかの基本的な項目について記載します。
 
 #### メソッドの指定
@@ -177,7 +180,7 @@ curlでは`curl https://google.com`と指定すると
 curl -X POST https://xxxxx/user
 ```
 
-#### データ
+#### データの送信
 POSTなどのメソッドを利用する場合は、リクエストともにデータを送信することがよくあります。
 例えばユーザ情報の登録APIにおいては、登録するデータを送信する必要があります。
 データの形式はAPI仕様によるので、必ず確認してください。
@@ -191,11 +194,13 @@ https://xxxxx/user
 ```
 
 #### HTTPヘッダーの追加
+ユーザエージェントやコンテンツタイプなどの指定でHTTPヘッダーを追加することがあります。
+
 ```
 $ curl -H 'User-Agent: hoge' https://xxxxx/
 ```
 
-#### クッキー
+#### Cookie
 APIによっては、認証が必要なことがあります。
 例えば、ユーザAの個人情報がユーザBから取得できてしまってはいけません。
 認証の方法もAPI仕様によるので、必ず確認しましょう。
@@ -204,6 +209,12 @@ APIによっては、認証が必要なことがあります。
 
 ```
 curl -XGET -c cookie.txt https://xxxxx/login
+```
+
+### フロントエンドアドレス
+フロントエンドアドレスを環境変数に指定しておきます。
+```
+export FRONTEND_ADDRESS=<your-frontend-address>
 ```
 
 ### カタログ情報API
@@ -401,7 +412,7 @@ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders | jq .
 ### フロントエンドでのデータの扱い
 例えば、オーダー詳細をブラウザからみてみよう。オーダーの情報はもちろん商品の情報も表示されている。しかし、オーダーAPIではitemのidしか返していません。
 どのようにしてitemの情報を取得しているでしょうか？
-また、モノリスなサービスの場合と比べてどうか考えてみましょう。。
+また、モノリスなサービスの場合と比べてどうか考えてみましょう。
 
 ### 非同期通信
 アーキテクチャデザインの図を見ると、shippingサービスはRabbitMQに対してデータを送っています。これまで、見てきたAPIはすべて同期的なデータ連携でしたが、
@@ -409,13 +420,13 @@ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders | jq .
 ## Sock Shopにおけるxxxx
 ### サービスを落としてみよう
 マイクロサービスの回復性について考えてみます。  
-cartサービスを落としてみて、どんな影響があるか確認してみよう。
+cartsサービスを落としてみて、どんな影響があるか確認してみよう。
 
 ```
 $ oc scale --replicas=0 deployment/carts
 ```
 
-- オーダーはできる？
+- オーダーはできるか？
 - 他のコンポーネントへの影響は？
 - ユーザ体験はどう変わったか？
 
@@ -424,9 +435,12 @@ cartsサービスを落としたあと、UI上からカートボタンが消え�
 これは、マイクロサービスでよくあるデグレードの実装が行われているからです。
 できる人は、実際にデグレードの実装が行われているコードを探してみましょう。
 
+https://github.com/microservices-demo/front-end/blob/5d9a4272fec3983250364917d8ea7a210cdbf58c/public/navbar.html#L227
+
 #### サーキットブレーカについて
 ブラウザのデバッグツールを開いて、cartsサービスへの通信状況を見てみましょう。  
 アクセスの度にcartsサービスのタイムアウトを待っているのがわかるのではないでしょうか。
+サーキットブレーカを実装した場合にはどのような動きになるか考えてみよう。
 
 ### サービスをスケールさせてみよう
 マイクロサービスのスケーリングについて考えてみます。  
@@ -438,13 +452,35 @@ $ oc scale --replicas=3 deployment/front-end
 ```
 
 ### サービスをデプロイしてみよう
-フロントエンドのコンテナイメージを変更してデプロイしてみよう。
+フロントエンドのコンテナイメージを変更してデプロイしてみよう。  
+サンプルで、背景色を変更したフロントエンドのイメージを用意しました。利用したい人は下記のように入れ替えてデプロイしてみましょう。
 
-#### 自分でイメージを作る
+```yaml
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: front-end
+  namespace: sock-shop
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: front-end
+    spec:
+      containers:
+      - name: front-end
+        image: mosuke5/front-end:master-bd5039f4
+        #image: weaveworksdemos/front-end:0.3.12
+```
 
-#### サンプルイメージを利用する
+```
+$ oc apply -f complete-demo.yml
+```
 
 ## トレーシング
+続いて、トレーシングを体験するためにjaegerなどのコンポーネントをデプロイします。
+
 ```
 $ oc apply -f tracing/jaeger.yml
 ```
