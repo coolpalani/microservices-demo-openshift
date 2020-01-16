@@ -5,7 +5,7 @@
 https://github.com/microservices-demo/microservices-demo
 
 ### Application Design
-Sock Shopのデザインは下記の通りで、Java, NodeJS, Goなどとマイクロサービスの特徴であるポリグロットを体現しています。
+Sock Shopのデザインは下記の通りで、Java, NodeJS, Goなどとマイクロサービスの特徴であるポリグロットを体現しています。詳細は[こちら](front-end-rh-mori-sock-shop.3d6a.kepcodevops.openshiftapps.com)。
 
 ![application-design](https://github.com/microservices-demo/microservices-demo.github.io/blob/HEAD/assets/Architecture.png?raw=true)
 
@@ -14,8 +14,8 @@ Sock Shopのデザインは下記の通りで、Java, NodeJS, Goなどとマイ�
 - Google Chrome
 - ocコマンドのインストール
 - curlのインストール
-- jqのインストール(optional)
-- postmanのインストール(optional)
+- jqのインストール (recommended)
+- postmanのインストール (optional)
 
 ## Sock ShopのOpenShiftへのデプロイ
 本レポジトリのマニフェストファイルは、SCCの変更やcluster-adminを持っていなくてもOpenShift上で動くように修正しています。
@@ -106,20 +106,21 @@ front-end   front-end-sock-shop.apps.8aad.example.opentlc.com             front-
 まずは、Sock Shopのサービスをブラウザから触って概要を理解しよう。
 
 1. ユーザ登録をする
-  - デフォルトでユーザは登録されていない
+    - デフォルトでユーザは登録されていない
 1. カタログから靴下を検索、閲覧する
 1. カートに入れてみる
-1. カートの中身を確認してみる
-1. オーダーしてみる
-1. ペイメントと住所を登録せずに、何かをオーダーしてみる
-1. ペイメントの登録をしてみる
-1. 住所の登録をしてみる
-1. もういちどオーダーしてみる
-1. オーダーの詳細をみてみる
+1. カートの中身を確認する
+1. ペイメントと住所を登録せずに、何かをオーダーする
+1. ペイメントの登録する
+1. 住所の登録する
+1. もういちどオーダーする
+1. オーダーの詳細をする
+
+### データ項目の予想(Optional)
+Sock Shopで利用されているデータを書き出してみましょう。
+後ほど実際にデータベースの構造を見ていきますが、現時点でどんなデータがどこにあるか意識しておくといいでしょう。
 
 ## Sock Shopのデータ構造をみる
-### 各サービス
-https://github.com/microservices-demo/microservices-demo/blob/master/internal-docs/design.md
 
 ### データ構造を確認する
 どのサービスがどのようなデータを保持しているかは、非常に重要です。
@@ -159,10 +160,14 @@ mysql> desc sock;
 { "_id" : ObjectId("5e1311e9019de10001d6d2db"), "firstName" : "taro", "lastName" : "ebisu", "email" : "taro.ebisu@xxxxxx.com", "username" : "mosuke5", "password" : "146d934cd057fa9dd4024df3c2c8dce86e03aade", "links" : {  }, "salt" : "a54efc2f95e33d8ad759c38153b808a57178e08d", "addresses" : [ ], "cards" : [ ] }
 ```
 
+#### データ構造
+
 ## Sock ShopのAPIを実行してみる
-### Swagger
-APIの仕様をみるためにはどうしたらいいのか？
-Swaggerについてまなんでみよう。
+### OpenAPI, Swagger
+APIの仕様はどのように定義すればいいでしょうか。また、どのようにその定義を確認したら良いでしょうか。  
+OpenAPIやSwaggerぜひ学んでみましょう。
+
+Sock ShopのAPIドキュメント  
 https://microservices-demo.github.io/api/index
 
 ### APIの検証方法
@@ -214,7 +219,7 @@ curl -XGET -c cookie.txt https://xxxxx/login
 ### フロントエンドアドレス
 フロントエンドアドレスを環境変数に指定しておきます。
 ```
-export FRONTEND_ADDRESS=<your-frontend-address>
+$ export FRONTEND_ADDRESS=<your-frontend-address>
 ```
 
 ### カタログ情報API
@@ -222,7 +227,7 @@ export FRONTEND_ADDRESS=<your-frontend-address>
 商品ID `3395a43e-2d88-40de-b95f-e00e1502085b`の検索。
 
 ```
-curl -X GET $FRONTEND_ADDRESS/catalogue/3395a43e-2d88-40de-b95f-e00e1502085b
+$ curl -X GET $FRONTEND_ADDRESS/catalogue/3395a43e-2d88-40de-b95f-e00e1502085b
 {
   "id": "3395a43e-2d88-40de-b95f-e00e1502085b",
   "name": "Colourful",
@@ -244,9 +249,11 @@ curl -X GET $FRONTEND_ADDRESS/catalogue/3395a43e-2d88-40de-b95f-e00e1502085b
 商品のオーダーなどは当然ながらログインした状態でないと実行できない。試しに、ログインセッションを持たないまま、オーダーAPIを実行してみるとログインしてくれとエラーが返ってきます。
 
 ```
-curl -XGET $FRONTEND_ADDRESS/orders                                    
+$ curl -XGET $FRONTEND_ADDRESS/orders
 {"message":"User not logged in.","error":{}}
 ```
+
+ログインには"username:password"をbase64でエンコードしたものが必要です。コマンドラインで生成するか、こちらのような[Base64エンコードをしてくれるWebサービス](https://uic.jp/base64encode/)で生成しましょう。
 
 ```
 $ echo -n "user:password" | base64
@@ -262,9 +269,10 @@ $ cat cookie.txt
 xxxxxxx
 ```
 
-ログインの確認
+ログインができているか確認します。オーダー情報が返ってきていれば成功です。
+
 ```
-$ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders                                    
+$ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders
 [
     {
         "customerId": "57a98d98e4b00679b4a830b2",
@@ -322,7 +330,7 @@ $FRONTEND_ADDRESS/cart
 ```
 
 ```
-$ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/cart | jq .
+$ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/cart
 [
   {
     "id": "5e006ff5ea192a0006ead37d",
@@ -337,13 +345,13 @@ $ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/cart | jq .
 同じ要領でAPI経由でオーダーしてみよう
 
 ```
-$ curl -XPOST -b cookie.txt http://front-end-sock-sho
-p.apps.8aad.example.opentlc.com/orders
+$ curl -XPOST -b cookie.txt $FRONTEND_ADDRESS/orders
 {"id":"5e008861dc2f2e0006f35ee6","customerId":"57a98d98e4b00679b4a830b2","customer":{"id":null,"firstName":"User","lastName":"Name","username":"user","addresses":[],"cards":[]},"address":{"id":null,"number":"246","street":"Whitelees Road","city":"Glasgow","postcode":"G67 3DL","country":"United Kingdom"},"card":{"id":null,"longNum":"5544154011345918","expires":"08/19","ccv":"958"},"items":[{"id":"5e006ff5ea192a0006ead37d","itemId":"3395a43e-2d88-40de-b95f-e00e1502085b","quantity":3,"unitPrice":18}],"shipment":{"id":"33c17bcf-2b1e-4a1b-83a2-c02a79b032cc","name":"57a98d98e4b00679b4a830b2"},"date":"2019-12-23T09:26:57.477+0000","total":58.989998
 ```
 
+上でオーダーしたものがオーダーリストに入っているか確認してみましょう。
 ```
-curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders | jq .
+$ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders
 [
   {
     "customerId": "57a98d98e4b00679b4a830b2",
@@ -417,7 +425,7 @@ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders | jq .
 ### 非同期通信
 アーキテクチャデザインの図を見ると、shippingサービスはRabbitMQに対してデータを送っています。これまで、見てきたAPIはすべて同期的なデータ連携でしたが、
 
-## Sock Shopにおけるxxxx
+## Sock Shopの回復性、スケール、デプロイ
 ### サービスを落としてみよう
 マイクロサービスの回復性について考えてみます。  
 cartsサービスを落としてみて、どんな影響があるか確認してみよう。
@@ -483,4 +491,19 @@ $ oc apply -f complete-demo.yml
 
 ```
 $ oc apply -f tracing/jaeger.yml
+$ oc expose service/jaeger-query
+$ oc get route
+NAME           HOST/PORT                                                           PATH      SERVICES       PORT         TERMINATION   WILDCARD
+jaeger-query   jaeger-query-sock-shop.xxxxx             jaeger-query   query-http                 None
 ```
+
+`jaeger-query`のURLに接続し下記のような画面にアクセスできれば成功です。
+
+![jaeger-query](/images/jaeger-query.png)
+
+トレーシングコンポーネント起動後に、もう一度Sock Shopで購入などの様々なアクションを実行しましょう。検索から`orders`サービスで検索をし、`orders: http:/orders`を探してみましょう。
+
+![jaeger-query-order](/images/jaeger-query-order.png)
+
+paymentサービスに障害が起きたと仮定し、paymentサービスを落としたあとに、もう一度購入操作をしてみましょう。
+この複雑な処理のなかでもどこでエラーが起きたか一目瞭然に確認することができます。
