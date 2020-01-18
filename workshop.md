@@ -68,7 +68,6 @@ user-db-78c5b86bb8-njsz8        1/1       Running   0          40s
 
 ### Sock Shopの公開
 現在のままでは、サービスは公開されていないので、公開していきます。
-必要に応じて、ここでOpenShiftのRouteやServiceについての解説をします。
 
 ```
 $ oc get route
@@ -156,8 +155,17 @@ mysql> desc sock;
 
 ```
 # mongo -u sock-user -p password user-db/users
+> show collections;
+???
+
 > db.customers.find()
-{ "_id" : ObjectId("5e1311e9019de10001d6d2db"), "firstName" : "taro", "lastName" : "ebisu", "email" : "taro.ebisu@xxxxxx.com", "username" : "mosuke5", "password" : "146d934cd057fa9dd4024df3c2c8dce86e03aade", "links" : {  }, "salt" : "a54efc2f95e33d8ad759c38153b808a57178e08d", "addresses" : [ ], "cards" : [ ] }
+???
+
+# mongo -u sock-user -o password carts-db/data
+???
+
+# mongo -u sock-user -o password orders-db/data
+???
 ```
 
 ### データ構造
@@ -417,8 +425,8 @@ $ export FRONTEND_ADDRESS=<your-frontend-address>
 ```
 
 ### カタログ情報API
-カタログ情報はログインなしでも実行できる簡単なAPI。
-商品ID `3395a43e-2d88-40de-b95f-e00e1502085b`の検索。
+カタログ情報はログインなしでも実行できる簡単なAPIを実行してみよう。[APIドキュメント](https://microservices-demo.github.io/api/index?url=https://raw.githubusercontent.com/microservices-demo/catalogue/master/api-spec/catalogue.json#/default)を見ながらURIとパラメータを確認するといいです。
+商品ID `3395a43e-2d88-40de-b95f-e00e1502085b`についても検索してみよう。
 
 ```
 $ curl -X GET $FRONTEND_ADDRESS/catalogue/3395a43e-2d88-40de-b95f-e00e1502085b
@@ -440,7 +448,8 @@ $ curl -X GET $FRONTEND_ADDRESS/catalogue/3395a43e-2d88-40de-b95f-e00e1502085b
 ```
 
 ### ログイン
-商品のオーダーなどは当然ながらログインした状態でないと実行できない。試しに、ログインセッションを持たないまま、オーダーAPIを実行してみるとログインしてくれとエラーが返ってきます。
+商品のオーダーなどは当然ながらログインした状態でないと実行できません。
+試しに、ログインセッションを持たないまま、オーダーAPIを実行してみるとログインしてくれとエラーが返ってきます。
 
 ```
 $ curl -XGET $FRONTEND_ADDRESS/orders
@@ -515,7 +524,8 @@ $ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders
 ```
 
 ### カートAPI
-それではAPI経由でカートに商品を追加してみます。
+API経由でカートに商品を追加してみましょう。
+その後にカートの中身を確認してみましょう。
 
 ```
 $ curl -XPOST -b cookie.txt \
@@ -537,14 +547,14 @@ $ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/cart
 ```
 
 ### オーダー
-同じ要領でAPI経由でオーダーしてみよう
+同じ要領でAPI経由でオーダーしてみよう。
+その後に、オーダーしたものがオーダーリストに入っているかAPI経由で同じく確認してみましょう。
 
 ```
 $ curl -XPOST -b cookie.txt $FRONTEND_ADDRESS/orders
 {"id":"5e008861dc2f2e0006f35ee6","customerId":"57a98d98e4b00679b4a830b2","customer":{"id":null,"firstName":"User","lastName":"Name","username":"user","addresses":[],"cards":[]},"address":{"id":null,"number":"246","street":"Whitelees Road","city":"Glasgow","postcode":"G67 3DL","country":"United Kingdom"},"card":{"id":null,"longNum":"5544154011345918","expires":"08/19","ccv":"958"},"items":[{"id":"5e006ff5ea192a0006ead37d","itemId":"3395a43e-2d88-40de-b95f-e00e1502085b","quantity":3,"unitPrice":18}],"shipment":{"id":"33c17bcf-2b1e-4a1b-83a2-c02a79b032cc","name":"57a98d98e4b00679b4a830b2"},"date":"2019-12-23T09:26:57.477+0000","total":58.989998
 ```
 
-上でオーダーしたものがオーダーリストに入っているか確認してみましょう。
 ```
 $ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders
 [
@@ -614,10 +624,18 @@ $ curl -XGET -b cookie.txt $FRONTEND_ADDRESS/orders
 
 ### フロントエンドでのデータの扱い
 例えば、オーダー詳細をブラウザからみてみよう。オーダーの情報はもちろん商品の情報も表示されている。しかし、オーダーAPIではitemのidしか返していません。
-どのようにしてitemの情報を取得しているでしょうか？  
-ブラウザのデベロッパーツール（検証モード）から確認してみましょう。
+どのようにしてitemの情報を取得しているか、 ブラウザのデベロッパーツール（検証モード）から確認してみましょう。
 
 また、モノリスなサービスの場合と比べてどうか、対策する方法があるか考えてみましょう。
+
+
+ブラウザのデベロッパーツールを利用するとわかるが、オーダー情報を取得後に、オーダーしたitemを1つずつ取得しに行っていることがわかる。
+
+![my-order](/images/sock-shop-myorder.png)
+
+![my-order-item](/images/sock-shop-myorder-item.png)
+
+コードレベルでも[こちらの実装](https://github.com/microservices-demo/front-end/blob/5e21067c2011a1f220322a704c9984fa206c4d12/public/customer-order.html#L205)から伺える。
 
 ### 非同期通信
 マイクロサービスアーキテクチャでは、サービス間の通信をどのように行うかは重要な選択の１つです。  
@@ -625,6 +643,8 @@ Sock Shopでも、アーキテクチャデザインの図を見ると、shipping
 
 `shipping`サービスと`queue-master`サービスのPodのログを見ながら、画面上からオーダー処理を行ってみましょう。
 ログからキューへの書き込みおよび、キューからの受信を確認してみましょう。
+
+また、非同期型の通信を利用するメリットについても考えてみましょう。
 
 ## Sock Shopの回復性、スケール、デプロイ
 ### サービスを落としてみよう
