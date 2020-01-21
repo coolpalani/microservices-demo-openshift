@@ -15,13 +15,6 @@ spec:
       containers:
       - name: carts-db
         image: centos/mongodb-34-centos7
-        resources:
-          requests:
-            cpu: 100m
-            memory: 200Mi
-          limits:
-            cpu: 200m
-            memory: 1Gi
         ports:
         - name: mongo
           containerPort: 27017
@@ -76,13 +69,6 @@ spec:
       containers:
       - name: carts
         image: weaveworksdemos/carts:0.4.8
-        resources:
-          #requests:
-          #  cpu: 100m
-          #  memory: 200Mi
-          limits:
-            cpu: 200m
-            memory: 1Gi
         ports:
          - containerPort: 80
         #startupProbe:
@@ -143,10 +129,6 @@ spec:
           containerName: catalogue-db
         failurePolicy: Abort
       timeoutSeconds: 600
-    resources:
-      requests:
-        cpu: 100m
-        memory: 200Mi
     type: Recreate
   template:
     metadata:
@@ -156,13 +138,6 @@ spec:
       containers:
       - name: catalogue-db
         image: centos/mysql-57-centos7
-        resources:
-          requests:
-            cpu: 100m
-            memory: 200Mi
-          limits:
-            cpu: 200m
-            memory: 1Gi
         env:
           - name: MYSQL_USER
             value: catalogue_user
@@ -213,13 +188,6 @@ spec:
         env:
         - name: ZIPKIN
           value: http://zipkin:9411/api/v1/spans
-        resources:
-          requests:
-            cpu: 100m
-            memory: 200Mi
-          limits:
-            cpu: 100m
-            memory: 200Mi
         ports:
         - containerPort: 80
       nodeSelector:
@@ -255,13 +223,6 @@ spec:
       containers:
       - name: front-end
         image: weaveworksdemos/front-end:0.3.12
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-          limits:
-            cpu: 200m
-            memory: 250Mi
         ports:
         - containerPort: 8079
       nodeSelector:
@@ -303,13 +264,6 @@ spec:
       containers:
       - name: orders-db
         image: centos/mongodb-34-centos7
-        resources:
-          requests:
-            cpu: 100m
-            memory: 200Mi
-          limits:
-            cpu: 200m
-            memory: 1Gi
         ports:
         - name: mongo
           containerPort: 27017
@@ -418,13 +372,6 @@ spec:
         env:
         - name: ZIPKIN
           value: http://zipkin:9411/api/v1/spans
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-          limits:
-            cpu: 100m
-            memory: 100Mi
         ports:
         - containerPort: 80
       nodeSelector:
@@ -590,10 +537,6 @@ spec:
           containerName: user-db
         failurePolicy: Abort
       timeoutSeconds: 600
-    resources:
-      requests:
-        cpu: 100m
-        memory: 200Mi
     type: Recreate
   template:
     metadata:
@@ -668,13 +611,6 @@ spec:
           value: user-db:27017
         - name: ZIPKIN
           value: http://zipkin:9411/api/v1/spans
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-          limits:
-            cpu: 300m
-            memory: 100Mi
       nodeSelector:
         beta.kubernetes.io/os: linux
 ---
