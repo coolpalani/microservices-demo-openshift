@@ -1,22 +1,19 @@
-# create a dedicated project for socks shop then apply policy changes needed to run socks shop:
+# Sock Shop on OpenShift 
+This repository is for running Sock Shop on Openshift. Original Sock Shop kubernetes manifests need full access to Kubernetes API. Therefore we can't Sock Shop on OpenShift using original those without any modifications. However, manifests in this have been modified to run on OpenShift without cluster-admin privilege.
 
 ```
-oc new-project socks-shop
-```
-Socks shop pods need full access to Kubernetes API via 'socks-shop' service account
-```
-oc adm policy add-cluster-role-to-user cluster-admin -z socks-shop
-```
-Socks shop pods also need to run as priviliaged containers, so grant 'priviliged' Security Context Constrains (SCC) for 'socks-shop' service account
-```
-oc adm policy add-scc-to-user privileged -z socks-shop
-```
-Socks app has an init daemon that has to run as UID 0, so grant 'anyuid' SCC for 'default' service account
-```
-oc adm policy add-scc-to-user anyuid -z default
-```
+$ oc new-project sock-shop
+$ oc apply -f complete-demo.yaml
+deployment.extensions/carts-db created
+service/carts-db created
+deployment.extensions/carts created
+service/carts created
+....
 
-# Deploy application in OpenShift using oc tools
-```
-oc apply -f complete-demo.yaml 
+$ oc expose service/front-end
+route.route.openshift.io/front-end exposed
+
+$ oc get route
+NAME        HOST/PORT                                           PATH      SERVICES    PORT      TERMINATION   WILDCARD
+front-end   front-end-sock-shop.apps.xxxxxxxxxxxxxxxxxxxx.com             front-end   web                     None
 ```
