@@ -161,10 +161,10 @@ mysql> desc sock;
 > db.customers.find()
 ???
 
-# mongo -u sock-user -o password carts-db/data
+# mongo -u sock-user -p password carts-db/data
 ???
 
-# mongo -u sock-user -o password orders-db/data
+# mongo -u sock-user -p password orders-db/data
 ???
 ```
 
