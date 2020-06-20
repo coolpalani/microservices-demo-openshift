@@ -24,11 +24,13 @@ prometheus-884ff6bf9-5mbh7                2/2     Running   12         5d19h
 ## SockShopへの適応
 ### SockShopをmember rollに追加
 
-<details><summary>クリックで展開します</summary><div>
+<details><summary>クリックで展開します</summary>
+<p>
  - リスト1
  - リスト2
  - リスト3
-</div></details>
+</p>
+</details>
 
 ### 各サービスへEnvoy Proxyを導入
 
