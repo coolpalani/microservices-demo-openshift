@@ -1,0 +1,17 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    openshift.io/host.generated: "true"
+  labels:
+    app: front-end-service
+  name: front-end-service-gateway-http
+spec:
+  host: front-end-sock-shop.apps.cluster-f19b.f19b.sandbox1401.opentlc.com
+  port:
+    targetPort: 8080
+  to:
+    kind: Service
+    name: istio-ingressgateway
+    weight: 100
+  wildcardPolicy: None

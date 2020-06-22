@@ -4,7 +4,6 @@ metadata:
   name: carts-db
   labels:
     name: carts-db
-  namespace: sock-shop
 spec:
   replicas: 1
   selector:
@@ -46,7 +45,6 @@ metadata:
   name: carts-db
   labels:
     name: carts-db
-  namespace: sock-shop
 spec:
   ports:
     # the port that this service should serve on
@@ -61,7 +59,6 @@ metadata:
   name: carts
   labels:
     name: carts
-  namespace: sock-shop
 spec:
   replicas: 1
   selector:
@@ -106,7 +103,6 @@ metadata:
   name: carts
   labels:
     name: carts
-  namespace: sock-shop
 spec:
   ports:
     # the port that this service should serve on
@@ -115,27 +111,17 @@ spec:
   selector:
     name: carts
 ---
-apiVersion: v1
-kind: DeploymentConfig
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: catalogue-db
   labels:
     name: catalogue-db
-  namespace: sock-shop
 spec:
   replicas: 1
-  strategy:
-    recreateParams:
-      post:
-        execNewPod:
-          command:
-          - "/bin/bash"
-          - "-c"
-          - "sleep 10 && curl https://raw.githubusercontent.com/microservices-demo/catalogue/master/docker/catalogue-db/data/dump.sql -o dump.sql && mysql -uroot -pfake_password socksdb -h $CATALOGUE_DB_SERVICE_HOST < dump.sql"
-          containerName: catalogue-db
-        failurePolicy: Abort
-      timeoutSeconds: 600
-    type: Recreate
+  selector:
+    matchLabels:
+      name: catalogue-db
   template:
     metadata:
       labels:
@@ -143,7 +129,7 @@ spec:
     spec:
       containers:
       - name: catalogue-db
-        image: centos/mysql-57-centos7
+        image: mosuke5/sockshop-catalogue-db@sha256:e9c9192a81991ab1acf2dcc5819f0b0eb513d04e80fa21ae1b869bc5ba810c40
         env:
           - name: MYSQL_USER
             value: catalogue_user
@@ -153,6 +139,10 @@ spec:
             value: socksdb
           - name: MYSQL_ROOT_PASSWORD
             value: fake_password
+          - name: MYSQL_OPERATIONS_USER
+            value: opuser
+          - name: MYSQL_OPERATIONS_PASSWORD
+            value: opuser_password
         ports:
         - name: mysql
           containerPort: 3306
@@ -165,7 +155,6 @@ metadata:
   name: catalogue-db
   labels:
     name: catalogue-db
-  namespace: sock-shop
 spec:
   ports:
     # the port that this service should serve on
@@ -180,7 +169,6 @@ metadata:
   name: catalogue
   labels:
     name: catalogue
-  namespace: sock-shop
 spec:
   replicas: 1
   selector:
@@ -193,10 +181,11 @@ spec:
     spec:
       containers:
       - name: catalogue
-        image: weaveworksdemos/catalogue:0.3.5
-        env:
-        - name: ZIPKIN
-          value: http://zipkin:9411/api/v1/spans
+        image: mosuke5/sockshop-catalogue:97545f4
+        #image: weaveworksdemos/catalogue:0.3.5
+        #env:
+        #- name: ZIPKIN
+        #  value: http://zipkin:9411/api/v1/spans
         ports:
         - containerPort: 80
       nodeSelector:
@@ -208,7 +197,6 @@ metadata:
   name: catalogue
   labels:
     name: catalogue
-  namespace: sock-shop
 spec:
   ports:
     # the port that this service should serve on
@@ -221,7 +209,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: front-end
-  namespace: sock-shop
 spec:
   replicas: 1
   selector:
@@ -246,7 +233,6 @@ metadata:
   name: front-end
   labels:
     name: front-end
-  namespace: sock-shop
 spec:
   type: ClusterIP
   ports:
@@ -256,8 +242,6 @@ spec:
       protocol: TCP
   selector:
     name: front-end
-status:
-  loadBalancer: {}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -265,7 +249,6 @@ metadata:
   name: orders-db
   labels:
     name: orders-db
-  namespace: sock-shop
 spec:
   replicas: 1
   selector:
@@ -307,7 +290,6 @@ metadata:
   name: orders-db
   labels:
     name: orders-db
-  namespace: sock-shop
 spec:
   ports:
     # the port that this service should serve on
@@ -322,7 +304,6 @@ metadata:
   name: orders
   labels:
     name: orders
-  namespace: sock-shop
 spec:
   replicas: 1
   selector:
@@ -361,7 +342,6 @@ metadata:
   name: orders
   labels:
     name: orders
-  namespace: sock-shop
 spec:
   ports:
     # the port that this service should serve on
@@ -376,7 +356,6 @@ metadata:
   name: payment
   labels:
     name: payment
-  namespace: sock-shop
 spec:
   replicas: 1
   selector:
@@ -404,7 +383,6 @@ metadata:
   name: payment
   labels:
     name: payment
-  namespace: sock-shop
 spec:
   ports:
     # the port that this service should serve on
@@ -419,7 +397,6 @@ metadata:
   name: queue-master
   labels:
     name: queue-master
-  namespace: sock-shop
 spec:
   replicas: 1
   selector:
@@ -446,7 +423,6 @@ metadata:
     name: queue-master
   annotations:
     prometheus.io/path: "/prometheus"
-  namespace: sock-shop
 spec:
   ports:
     # the port that this service should serve on
@@ -461,7 +437,6 @@ metadata:
   name: rabbitmq
   labels:
     name: rabbitmq
-  namespace: sock-shop
 spec:
   replicas: 1
   selector:
@@ -486,12 +461,14 @@ metadata:
   name: rabbitmq
   labels:
     name: rabbitmq
-  namespace: sock-shop
 spec:
   ports:
     # the port that this service should serve on
   - port: 5672
     targetPort: 5672
+    name: "amq"
+  - port: 4369
+    name: "epmd"
   selector:
     name: rabbitmq
 ---
@@ -501,7 +478,6 @@ metadata:
   name: shipping
   labels:
     name: shipping
-  namespace: sock-shop
 spec:
   replicas: 1
   selector:
@@ -538,7 +514,6 @@ metadata:
   name: shipping
   labels:
     name: shipping
-  namespace: sock-shop
 spec:
   ports:
     # the port that this service should serve on
@@ -547,27 +522,17 @@ spec:
   selector:
     name: shipping
 ---
-apiVersion: v1
-kind: DeploymentConfig
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: user-db
   labels:
     name: user-db
-  namespace: sock-shop
 spec:
   replicas: 1
-  strategy:
-    recreateParams:
-      post:
-        execNewPod:
-          command:
-          - "/bin/bash"
-          - "-c"
-          - "sleep 10 && curl https://raw.githubusercontent.com/microservices-demo/user/master/docker/user-db/scripts/accounts-create.js -o accounts-create.js && mongo -u sock-user -p password $USER_DB_SERVICE_HOST:$USER_DB_SERVICE_PORT/users accounts-create.js"
-          containerName: user-db
-        failurePolicy: Abort
-      timeoutSeconds: 600
-    type: Recreate
+  selector:
+    matchLabels:
+      name: user-db
   template:
     metadata:
       labels:
@@ -575,7 +540,8 @@ spec:
     spec:
       containers:
       - name: user-db
-        image: centos/mongodb-34-centos7
+        image: mosuke5/sockshop-user-db@sha256:7633a123fe2a1e6191fd37cad6d4f07bfb2acdc3a634e27c226df3ae21357da0
+        #image: centos/mongodb-34-centos7
         ports:
         - name: mongo
           containerPort: 27017
@@ -588,6 +554,10 @@ spec:
           value: users
         - name: MONGODB_ADMIN_PASSWORD
           value: admin
+        - name: MONGODB_BACKUP_USER
+          value: bkuser
+        - name: MONGODB_BACKUP_PASSWORD
+          value: password
         volumeMounts:
         - mountPath: /tmp
           name: tmp-volume
@@ -604,7 +574,6 @@ metadata:
   name: user-db
   labels:
     name: user-db
-  namespace: sock-shop
 spec:
   ports:
     # the port that this service should serve on
@@ -619,7 +588,6 @@ metadata:
   name: user
   labels:
     name: user
-  namespace: sock-shop
 spec:
   replicas: 1
   selector:
@@ -653,7 +621,6 @@ metadata:
   name: user
   labels:
     name: user
-  namespace: sock-shop
 spec:
   ports:
     # the port that this service should serve on
