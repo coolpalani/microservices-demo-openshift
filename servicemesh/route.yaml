@@ -5,9 +5,9 @@ metadata:
     openshift.io/host.generated: "true"
   labels:
     app: front-end-service
-  name: front-end-service-gateway-http
+  name: front-end-service-gateway
 spec:
-  host: front-end-sock-shop.apps.cluster-f19b.f19b.sandbox1401.opentlc.com
+  host: front-end-user1-sockshop.apps.cluster-6a92.6a92.sandbox595.opentlc.com
   port:
     targetPort: 8080
   to:

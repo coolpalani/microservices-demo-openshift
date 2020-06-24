@@ -1,8 +1,8 @@
 - hosts: localhost
   vars:
-    application_project: sock-shop
-    istio_project: sockshop-istio-system
-    base_domain: cluster-bd7c.bd7c.sandbox936.opentlc.com
+    application_project: user1-sockshop
+    istio_project: user1-istio-system
+    base_domain: cluster-f19b.f19b.sandbox1401.opentlc.com
   tasks:
   #- name: Create cert.cfg
   #  template:
@@ -34,7 +34,7 @@
   #    src: manifests/wildcard-gateway.yaml
   - name: Fetch all services in bookinfo namespace
     set_fact:
-      services: "{{ lookup('k8s', kind='Service', namespace='sock-shop') }}"
+      services: "{{ lookup('k8s', kind='Service', namespace='user1-sockshop') }}"
     register: services
   - name: Create policies for enabling mtls
     k8s:

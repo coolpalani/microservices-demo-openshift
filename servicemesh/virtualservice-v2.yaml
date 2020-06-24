@@ -17,3 +17,10 @@ spec:
           number: 80
         host: front-end.user1-sockshop.svc.cluster.local
         subset: v1
+      weight: 80
+    - destination:
+        port:
+          number: 80
+        host: front-end.user1-sockshop.svc.cluster.local
+        subset: v2
+      weight: 20

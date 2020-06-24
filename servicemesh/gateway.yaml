@@ -11,4 +11,4 @@ spec:
       name: http
       protocol: HTTP
     hosts:
-    - "*.apps.cluster-f19b.f19b.sandbox1401.opentlc.com"
+    - "*.apps.cluster-6a92.6a92.sandbox595.opentlc.com"
