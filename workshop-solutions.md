@@ -741,3 +741,7 @@ jaeger-query   jaeger-query-sock-shop.xxxxx             jaeger-query   query-htt
 
 paymentサービスに障害が起きたと仮定し、paymentサービスを落としたあとに、もう一度購入操作をしてみましょう。
 この複雑な処理のなかでもどこでエラーが起きたか一目瞭然に確認することができます。
+
+## サービスメッシュ
+Istioを使ったサービスメッシュによるマイクロサービスの課題解決を体験する場合は続きで以下にトライしてみましょう。  
+[Service Mesh for sockshop](servicemesh/workshop-servicemesh.md)
