@@ -181,7 +181,7 @@ spec:
     spec:
       containers:
       - name: catalogue
-        image: mosuke5/sockshop-catalogue:97545f4
+        image: mosuke5/sockshop-catalogue:a04de03
         #image: weaveworksdemos/catalogue:0.3.5
         #env:
         #- name: ZIPKIN
