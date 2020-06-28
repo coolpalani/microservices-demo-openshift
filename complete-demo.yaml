@@ -222,7 +222,7 @@ spec:
     spec:
       containers:
       - name: front-end
-        image: weaveworksdemos/front-end:0.3.12
+        image: weaveworksdemos/front-end:master-5e21067c
         ports:
         - containerPort: 8079
       nodeSelector:
