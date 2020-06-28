@@ -712,8 +712,8 @@ spec:
     spec:
       containers:
       - name: front-end
-        image: mosuke5/front-end:master-bd5039f4
-        #image: weaveworksdemos/front-end:0.3.12
+        #image: mosuke5/front-end:master-49c0d1f
+        image: mosuke5/front-end:master-7ad6254
 ```
 
 ```
