@@ -24,7 +24,7 @@ Sock Shopのデザインは下記の通りで、Java, NodeJS, Goなどとマイ�
 $ export OCP_USER=userX
 $ oc new-project $OCP_USER-sockshop
 
-$ oc apply -f complete-demo.yaml
+$ oc apply -f complete-demo.yaml -n $OCP_USER-sockshop
 deployment.extensions/carts-db created
 service/carts-db created
 deployment.extensions/carts created
@@ -419,6 +419,34 @@ APIによっては、認証が必要なことがあります。
 
 ```
 curl -XGET -c cookie.txt https://xxxxx/login
+```
+
+### JSONの整形方法
+`curl`でAPIを実行した際のレスポンスはJSON形式ですが、なにもしないと1行にまとめられていて見づらいです。
+`jq`か`python`などを使って見やすく表示しましょう。
+
+```
+$ curl -X GET http://xxxxx/ | jq .
+{
+    "id": "3395a43e-2d88-40de-b95f-e00e1502085b",
+    "name": "Colourful",
+    "description": "proident occaecat irure et excepteur labore minim nisi amet irure",
+    "imageUrl": [
+        "/catalogue/images/colourful_socks.jpg",
+        "/catalogue/images/colourful_socks.jpg"
+    ],
+```
+
+```
+$ curl -X GET http://xxxxx/ | python -mjson.tool
+{
+    "id": "3395a43e-2d88-40de-b95f-e00e1502085b",
+    "name": "Colourful",
+    "description": "proident occaecat irure et excepteur labore minim nisi amet irure",
+    "imageUrl": [
+        "/catalogue/images/colourful_socks.jpg",
+        "/catalogue/images/colourful_socks.jpg"
+    ],
 ```
 
 ### フロントエンドアドレス
