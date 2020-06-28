@@ -4,4 +4,4 @@ metadata:
   name: default
 spec:
   members:
-    - user1-sockshop
+    - userX-sockshop

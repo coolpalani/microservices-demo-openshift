@@ -3,7 +3,7 @@ kind: DestinationRule
 metadata:
   name: sockshop-carts
 spec:
-  host: carts.user1-sockshop.svc.cluster.local
+  host: carts.userX-sockshop.svc.cluster.local
   trafficPolicy:
     outlierDetection:
       baseEjectionTime: 2m

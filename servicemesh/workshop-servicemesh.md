@@ -55,7 +55,7 @@ prometheus-884ff6bf9-5mbh7                2/2     Running   12         5d19h
 `configureMembers`に`userX-sockshop`が含まれていればメンバー追加ができています。
 
 ```
-$ oc apply -f servicemesh/member-roll.yaml -n $OCP_USER-istio-system
+$ oc apply -f member-roll.yaml -n $OCP_USER-istio-system
 servicemeshmemberroll.maistra.io/default created
 
 $ oc get ServiceMeshMemberRoll default -o yaml | grep -A 1 configuredMembers
@@ -98,9 +98,9 @@ deploymentのannotationsに `"sidecar.istio.io/inject": "true"` を入れるこ�
 ※本環境では、永続ボリュームを利用していないため、Podが再デプロイされたタイミングで以前に保存したデータが削除される点ご注意ください。
 
 ```
-$ for deployment_name in $(oc get deploy | sed '1d' | awk '{print $1}')
+$ for deployment_name in $(oc get deploy -n $OCP_USER-sockshop | sed '1d' | awk '{print $1}')
 do
-    oc patch deploy $deployment_name --type='json' -p "[{\"op\": \"add\", \"path\": \"/spec/template/metadata\", \"value\": {\"annotations\":{\"sidecar.istio.io/inject\": \"true\"}, \"labels\":{\"name\":\"$deployment_name\"}}}]"
+    oc patch deploy $deployment_name --type='json' -p "[{\"op\": \"add\", \"path\": \"/spec/template/metadata\", \"value\": {\"annotations\":{\"sidecar.istio.io/inject\": \"true\"}, \"labels\":{\"name\":\"$deployment_name\"}}}]" -n $OCP_USER-sockshop
 done
 
 deployment.extensions/carts patched
@@ -206,17 +206,31 @@ Ingress Gatewayからのトラフィックを可視化できていることを�
 ![kiali](../images/kiali.gif)
 
 ## レジリエンス
-cartsサービスのタイムアウトを待っていたのをなくしたい
+cartsサービスを落とした際に、応答しないcartsサービスのタイムアウトを長い間待っていました。
+各アプリケーション側で適切にタイムアウトを適切に設定することも非常に重要ですが、一定時間落ちているサービスに対してタイムアウトを待つことやアクセスを試みること自体が無駄とも言えます。
+サーキットブレーカーの考え方を実装することで回避できますが、Istioではアプリケーションに実装することなくサービスメッシュ層でサーキットブレーカーを実装できます。
+
+下記は、Istioを導入する前のcartsサービスを落としたときの、ネットワーク状況です。
+
+![carts-timeout](../images/carts-timeout.png)
+
+Istioを導入後に同様のことを行うとどの様に変わるか確認してみましょう。  
+確認が終了したら、cartsサービスをもとに戻して復旧させましょう。
+
+デフォルトの設定でも、Envoy Proxyが接続先のサービスの状態に応じて長い時間待つことなく504を返してくれますが、より詳細のサーキットブレーカーの設定を行うには、DestinationRuleで設定が可能です。
+https://istio.io/latest/docs/reference/config/networking/destination-rule/#OutlierDetection
 
 ## トラフィック制御
-複数バージョンある、front-endのサービスのトラフィック比率の変更を行ってみます。  
-
-front-endを複数バージョンリリースします。
+複数バージョンある、front-endのサービスのトラフィック比率の変更を行うことも可能です。  
+まず、front-endサービスを複数バージョンでリリースします。
 複数バージョンをリリースしたのち、ブラウザからアプリケーションにアクセスしてみましょう。おそらく、ランダム（50％程度の確立）で、新旧のバージョンが表示されるのではないかと思います。
 
 ```
+// v2のリリース(v1と共存)
 $ oc apply -f front-end-v2.yaml -n $OCP_USER-sockshop
-$ oc get pod -n $OCP_USER-sockshop
+$ oc get pod -n $OCP_USER-sockshop | grep front-end
+front-end-55cdb5dd8d-j7pg8           2/2     Running   0          100m
+front-end-v2-647dbd4ccc-dp778        2/2     Running   0          97m
 ```
 
 この状態に、トラフィック比率のコントロールを設定します。  
@@ -228,16 +242,18 @@ $ oc get pod -n $OCP_USER-sockshop
 $ oc apply -f front-end-destinationrule.yaml
 $ oc apply -f virtualservice-v2.yaml
 
+// 自動で定期的にアプリケーションにアクセスするようにする
 $ watch curl xxxxxxxxx.com
 ```
 
 kialiでトラフィックの分散の様子を確認してみましょう。  
 トラフィックの比率を表示するとおおよそ80:20で流れていることを確認できるはずです。
+kialiのGraphにて`No edge label`を`Requests percentage`に変更するとトラフィックの比率が表示されます。
 
 ![kiali-traffic-control](../images/kiali-traffic-control.png)
 
-## トレーシング
-特に何も設定することなしに分散トレーシングが実現
-
 ## トラフィックモニタリング
+Istioでは、トラフィックデータをPrometheusに送信し管理できます。
+GrafanaでダッシュボードWorkload情報を確認できます。
 
+![grafana](../images/istio-grafana.png)

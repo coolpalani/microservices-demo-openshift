@@ -4,7 +4,7 @@ metadata:
   name: front-end-virtualservice
 spec:
   hosts:
-    - front-end-user1-sockshop.apps.cluster-6a92.6a92.sandbox595.opentlc.com
+    - front-end-userX-sockshop.apps.cluster-6a92.6a92.sandbox595.opentlc.com
   gateways:
     - sockshop-wildcard-gateway
   http:
@@ -15,12 +15,12 @@ spec:
     - destination:
         port:
           number: 80
-        host: front-end.user1-sockshop.svc.cluster.local
+        host: front-end.userX-sockshop.svc.cluster.local
         subset: v1
       weight: 80
     - destination:
         port:
           number: 80
-        host: front-end.user1-sockshop.svc.cluster.local
+        host: front-end.userX-sockshop.svc.cluster.local
         subset: v2
       weight: 20
