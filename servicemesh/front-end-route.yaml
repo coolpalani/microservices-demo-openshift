@@ -7,7 +7,7 @@ metadata:
     app: front-end-service
   name: front-end-service-gateway
 spec:
-  host: front-end-user10-sockshop.apps.cluster-6a92.6a92.sandbox595.opentlc.com
+  host: front-end-userX-sockshop.apps.cluster-6a92.6a92.sandbox595.opentlc.com
   port:
     targetPort: 8080
   to:
