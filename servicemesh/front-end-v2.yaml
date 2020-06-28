@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: front-end
-        image: mosuke5/front-end:master-7ad6254
+        image: mosuke5/front-end:master-49c0d1f
         ports:
         - containerPort: 8079
       nodeSelector:
